@@ -325,11 +325,15 @@ export class View extends HTMLElement {
         return this.dispatchEvent(new CustomEvent(name, { detail, cancelable }))
     }
     #onRelocate({ reason, range, index, fraction, size }) {
+        const chapterLocation = { // TODO: EBOOK
+            current: this.renderer.page,
+            total: this.renderer.pages - 2
+        }
         const progress = this.#sectionProgress?.getProgress(index, fraction, size) ?? {}
         const tocItem = this.#tocProgress?.getProgress(index, range)
         const pageItem = this.#pageProgress?.getProgress(index, range)
         const cfi = this.getCFI(index, range)
-        this.lastLocation = { ...progress, tocItem, pageItem, cfi, range }
+        this.lastLocation = { ...progress, tocItem, pageItem, cfi, range, chapterLocation } // TODO: EBOOK
         if (reason === 'snap' || reason === 'page' || reason === 'scroll')
             this.history.replaceState(cfi)
         this.#emit('relocate', this.lastLocation)
@@ -341,6 +345,8 @@ export class View extends HTMLElement {
             doc.documentElement.dir ||= this.language.direction ?? ''
 
         this.#handleLinks(doc, index)
+        this.#handleClick(doc) // TODO: EBOOK
+        this.#handleImage(doc) // TODO: EBOOK
         this.#cursorAutohider.cloneFor(doc.documentElement)
 
         this.#emit('load', { doc, index })
@@ -361,6 +367,41 @@ export class View extends HTMLElement {
             else Promise.resolve(this.#emit('link', { a, href }, true))
                 .then(x => x ? this.goTo(href) : null)
                 .catch(e => console.error(e))
+        })
+    }
+    // TODO: EBOOK
+    #handleImage(doc) {
+        for (const img of doc.querySelectorAll('img')) {
+            img.addEventListener('click', e => {
+                e.preventDefault()
+                e.stopPropagation()
+                this.#emit('click-image', { img })
+            })
+        }
+    }
+    // TODO: EBOOK
+    #handleClick(doc) {
+        doc.addEventListener('click', e => {
+            if (doc.getSelection().type === "Range")
+                return
+
+            let { clientX, clientY } = e
+            // add top margin to y, y is relative to the iframe
+            const topMargin = this.renderer.getAttribute('top-margin').match(/\d+/)[0]
+            clientY += parseInt(topMargin)
+
+            this.renderer.scrollProp == 'scrollLeft'
+              ? clientX -= (this.renderer.start - this.renderer.size)
+              : clientY -= (this.renderer.start)
+
+            this.#emit('click-view', { x: clientX, y: clientY })
+        })
+        this.renderer.addEventListener('click', e => {
+            let { clientX, clientY } = e
+            while (clientX > window.innerWidth) {
+                clientX -= window.innerWidth
+            }
+            this.#emit('click-view', { x: clientX, y: clientY })
         })
     }
     async addAnnotation(annotation, remove) {
