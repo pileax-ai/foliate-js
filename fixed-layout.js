@@ -658,7 +658,7 @@ export class FixedLayout extends HTMLElement {
                         },
                     },
                 }))
-                this.#renderScrollPage(pageData);
+                this.#renderScrollPage(pageData)
                 // Forward wheel events to host when iframe has pointer-events
                 // (fallback for the brief window after scroll settles)
                 doc.addEventListener('wheel', e => {
@@ -719,9 +719,9 @@ export class FixedLayout extends HTMLElement {
         const scale = (hostWidth / vw) * this.#scaleFactor
 
         if (frame.onZoom) {
-            const p = frame.onZoom({ doc: frame.iframe.contentDocument, scale, pageColors: this.#pageColors });
+            const p = frame.onZoom({ doc: frame.iframe.contentDocument, scale, pageColors: this.#pageColors })
             if (p?.then) {
-              p.then(() => this.#refreshOverlayerForFrame(frame));
+                p.then(() => this.#refreshOverlayerForFrame(frame))
             }
             Object.assign(frame.iframe.style, {
                 width: `${vw * scale}px`,
