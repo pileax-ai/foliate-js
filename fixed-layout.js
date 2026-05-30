@@ -804,7 +804,10 @@ export class FixedLayout extends HTMLElement {
         this.defaultViewport = book.rendition?.viewport
         this.rtl = book.dir === 'rtl'
 
-        this.#spread()
+        const attrSpread = this.getAttribute('spread');
+        const spreadMode = attrSpread !== null ? attrSpread : book.rendition?.spread;
+        this.#spread(spreadMode);
+
         if (this.#scrollMode) this.#initScrollMode()
     }
     #spread(mode) {
