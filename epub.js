@@ -929,6 +929,18 @@ const getDisplayOptions = doc => {
     }
 }
 
+const sanitizeXmlString = (xmlString) => {
+  if (!xmlString) return xmlString
+
+  return  xmlString.replace(/<!--([\s\S]*?)-->/g, (match, content) => {
+    if (content.includes('--')) {
+      content = content.replace(/--/g, '- -');
+      return `<!--${content}-->`;
+    }
+    return match;
+  })
+}
+
 export class EPUB {
     parser = new DOMParser()
     #loader
@@ -941,8 +953,9 @@ export class EPUB {
     }
     async #loadXML(uri) {
         const str = await this.loadText(uri)
-        if (!str) return null
-        const doc = this.parser.parseFromString(str, MIME.XML)
+        const sanitizeStr = sanitizeXmlString(str)
+        if (!sanitizeStr) return null
+        const doc = this.parser.parseFromString(sanitizeStr, MIME.XML)
         if (doc.querySelector('parsererror'))
             throw new Error(`XML parsing error: ${uri}
 ${doc.querySelector('parsererror').innerText}`)
