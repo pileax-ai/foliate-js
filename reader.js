@@ -34,12 +34,6 @@ const getCSS = ({ spacing, justify, hyphenate }) => `
     pre {
         white-space: pre-wrap !important;
     }
-    aside[epub|type~="endnote"],
-    aside[epub|type~="footnote"],
-    aside[epub|type~="note"],
-    aside[epub|type~="rearnote"] {
-        display: none;
-    }
 `
 
 const $ = document.querySelector.bind(document)
