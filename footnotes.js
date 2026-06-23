@@ -1,6 +1,27 @@
 const getTypes = el => new Set(el?.getAttributeNS?.('http://www.idpf.org/2007/ops', 'type')?.split(' '))
 const getRoles = el => new Set(el?.getAttribute?.('role')?.split(' '))
 
+const getElementTypes = (el) => {
+    if (!el) return new Set()
+
+    const types = []
+
+    if (el.attributes) {
+        for (let i = 0; i < el.attributes.length; i++) {
+            const attr = el.attributes[i]
+            // localName drops the prefix, matching 'type' from 'epub:type', 'ops:type', or 'type'
+            if (attr.localName === 'type' && attr.value) {
+                types.push(attr.value)
+            }
+        }
+    }
+
+    const combinedTypes = types.join(' ')
+
+    return new Set(combinedTypes.trim().split(/\s+/).filter(Boolean))
+}
+const isKindleFootnote = (a) => a?.getAttribute?.('href')?.includes('kindle:pos')
+
 const isSuper = el => {
     if (el.matches('sup')) return true
     const { verticalAlign } = getComputedStyle(el)
@@ -12,14 +33,17 @@ const isSuper = el => {
 
 const refTypes = ['biblioref', 'glossref', 'noteref']
 const refRoles = ['doc-biblioref', 'doc-glossref', 'doc-noteref']
-const isFootnoteReference = a => {
+const isElementFootnote = a => {
+    const rel = a?.getAttribute('rel') || ''
+    const elementTypes = getElementTypes(a)
+    return isKindleFootnote(a) || refTypes.some(t => elementTypes.has(t)) || rel.includes('footnote')
+}
+export const isFootnoteReference = a => {
     const types = getTypes(a)
     const roles = getRoles(a)
-    const href = a?.getAttribute?.('href') || ''
-    const linkType = a?.getAttribute?.('type') || ''
-    const isKindleFootnote = href.includes('kindle:pos') || refTypes.includes(linkType)
+
     return {
-        yes: refRoles.some(r => roles.has(r)) || refTypes.some(t => types.has(t)) || isKindleFootnote,
+        yes: refRoles.some(r => roles.has(r)) || refTypes.some(t => types.has(t)) || isElementFootnote(a),
         maybe: () => !types.has('backlink') && !roles.has('doc-backlink')
             && (isSuper(a) || a.children.length === 1 && isSuper(a.children[0])
             || isSuper(a.parentElement)),

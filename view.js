@@ -2,6 +2,7 @@ import * as CFI from './epubcfi.js'
 import { TOCProgress, SectionProgress, PageProgress } from './progress.js'
 import { Overlayer } from './overlayer.js'
 import { textWalker } from './text-walker.js'
+import { isFootnoteReference } from './footnotes.js'
 
 const SEARCH_PREFIX = 'foliate-search:'
 
@@ -388,6 +389,10 @@ export class View extends HTMLElement {
     #handleImage(doc) {
         for (const img of doc.querySelectorAll('img')) {
             img.addEventListener('click', e => {
+                const closestLink = img.closest('a')
+                if (closestLink && isFootnoteReference(closestLink)) {
+                    return
+                }
                 e.preventDefault()
                 e.stopPropagation()
                 this.#emit('click-image', { img })
