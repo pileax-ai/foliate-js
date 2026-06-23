@@ -20,9 +20,9 @@ const getElementTypes = (el) => {
 
     return new Set(combinedTypes.trim().split(/\s+/).filter(Boolean))
 }
-const isKindleFootnote = (a) => a?.getAttribute?.('href')?.includes('kindle:pos')
 
 const isSuper = el => {
+    if (!el) return false
     if (el.matches('sup')) return true
     const { verticalAlign } = getComputedStyle(el)
     return verticalAlign === 'super'
@@ -35,8 +35,11 @@ const refTypes = ['biblioref', 'glossref', 'noteref']
 const refRoles = ['doc-biblioref', 'doc-glossref', 'doc-noteref']
 const isElementFootnote = a => {
     const rel = a?.getAttribute('rel') || ''
+    const id = a.getAttribute('id') || ''
     const elementTypes = getElementTypes(a)
-    return isKindleFootnote(a) || refTypes.some(t => elementTypes.has(t)) || rel.includes('footnote')
+    return refTypes.some(t => elementTypes.has(t))
+        || rel.includes('footnote')
+        || id.includes('footnote')
 }
 export const isFootnoteReference = a => {
     const types = getTypes(a)
@@ -46,7 +49,7 @@ export const isFootnoteReference = a => {
         yes: refRoles.some(r => roles.has(r)) || refTypes.some(t => types.has(t)) || isElementFootnote(a),
         maybe: () => !types.has('backlink') && !roles.has('doc-backlink')
             && (isSuper(a) || a.children.length === 1 && isSuper(a.children[0])
-            || isSuper(a.parentElement)),
+            || isSuper(a.parentElement) || isSuper(a.parentElement?.parentElement)),
     }
 }
 
@@ -116,8 +119,10 @@ export class FootnoteHandler extends EventTarget {
         const { yes, maybe } = isFootnoteReference(a)
         if (yes) {
             e.preventDefault()
-            return Promise.resolve(book.resolveHref(href)).then(target =>
-                this.#showFragment(book, target, href))
+            return Promise.resolve(book.resolveHref(href)).then(({ index, anchor }) => {
+                const target = { index, anchor: doc => extractFootnote(doc, anchor) }
+                return this.#showFragment(book, target, href)
+            })
         }
         else if (this.detectFootnotes && maybe()) {
             e.preventDefault()
