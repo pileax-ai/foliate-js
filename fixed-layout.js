@@ -256,7 +256,8 @@ export class FixedLayout extends HTMLElement {
         const left = this.#left ?? {}
         const right = this.#center ?? this.#right ?? {}
         const target = side === 'left' ? left : right
-        const { width, height } = this.getBoundingClientRect()
+        const width = this.clientWidth || this.getBoundingClientRect().width
+        const { height } = this.getBoundingClientRect()
         // for unfolded devices with slightly taller height than width also use landscape layout
         const portrait = this.spread !== 'both' && this.spread !== 'portrait'
             && height > width * 1.2
