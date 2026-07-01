@@ -34,12 +34,27 @@ const isSuper = el => {
 const refTypes = ['biblioref', 'glossref', 'noteref']
 const refRoles = ['doc-biblioref', 'doc-glossref', 'doc-noteref']
 const isElementFootnote = a => {
-    const rel = a?.getAttribute('rel') || ''
-    const id = a.getAttribute('id') || ''
     const elementTypes = getElementTypes(a)
-    return refTypes.some(t => elementTypes.has(t))
+    const rel = (a?.getAttribute('rel') || '').toLowerCase()
+    const id = (a.getAttribute('id') || '').toLowerCase()
+    const childClass = (a.firstElementChild?.className || '').toLowerCase()
+    const href = (a.getAttribute('href') || '').toLowerCase()
+    let isFootnote = refTypes.some(t => elementTypes.has(t))
         || rel.includes('footnote')
         || id.includes('footnote')
+        || childClass.includes('footnote')
+    if (isFootnote) return true
+    if (!href.includes('#')) return false
+
+    // Footnote patterns
+    const text = a.textContent?.trim() || ''
+    isFootnote = /^\[\d+]$/.test(text)      // e.g: [2]
+        || /^\d+$/.test(text)               // e.g: 2
+        || /^[①-⑳]$/.test(text)           // e.g: ① - ⑳
+        || text.includes('注')              // e.g: 注
+    console.log('isFootnote', childClass, text, isFootnote)
+
+    return isFootnote
 }
 export const isFootnoteReference = a => {
     const types = getTypes(a)
