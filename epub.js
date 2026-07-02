@@ -671,8 +671,14 @@ class Resources {
             ?? this.getItemByID($$$(opf, 'meta')
                 .find(filterAttribute('name', 'cover'))
                 ?.getAttribute('content'))
+            ?? this.manifest.find(item => item.id === 'cover'
+                && item.mediaType.startsWith('image'))
+            ?? this.manifest.find(item => item.href.includes('cover')
+                && item.mediaType.startsWith('image'))
             ?? this.getItemByHref(this.guide
                 ?.find(ref => ref.type.includes('cover'))?.href)
+            // last resort: first image in manifest
+            ?? this.manifest.find(item => item.mediaType.startsWith('image'))
 
         this.cfis = CFI.fromElements($$itemref)
     }
