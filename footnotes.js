@@ -52,7 +52,6 @@ const isElementFootnote = a => {
         || /^\d+$/.test(text)               // e.g: 2
         || /^[①-⑳]$/.test(text)           // e.g: ① - ⑳
         || text.includes('注')              // e.g: 注
-    console.log('isFootnote', childClass, text, isFootnote)
 
     return isFootnote
 }
